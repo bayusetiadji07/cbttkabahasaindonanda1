@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aplikasi CBT Latihan Soal TKA Bahasa Indonesia SMP dengan 30 soal berstimulus, fitur timer, dan analisis capaian kompetensi otomatis.">
+    <meta name="keywords" content="CBT, Bahasa Indonesia, SMP, TKA, Asesmen Nasional, Literasi, Latihan Soal">
+    <meta name="author" content="Si Rakit - Tim Pengembang Pendidikan">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CBT TKA Bahasa Indonesia SMP - Asesmen Kompetensi">
+    <meta property="og:description" content="Uji kemampuan literasi Bahasa Indonesia dengan simulasi ujian CBT yang interaktif dan mendalam.">
+    <meta property="og:image" content="assets/social-share.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Logo dan judul aplikasi CBT TKA Bahasa Indonesia SMP">
+
+    <title>CBT TKA Bahasa Indonesia SMP - Asesmen Kompetensi</title>
+    <link rel="icon" type="image/svg+xml" href="assets/logo-literasi.svg">
+    <link rel="apple-touch-icon" href="assets/pwa-icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Modal / Halaman Login Siswa -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-logo" style="margin: 0 auto 16px;">
+                    <img src="assets/logo-literasi.svg" alt="Logo CBT" width="48" height="48">
+                </div>
+                <h2>Masuk Ujian CBT</h2>
+                <p>TKA Bahasa Indonesia Jenjang SMP</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="input-name">Nama Lengkap Siswa</label>
+                    <input type="text" id="input-name" class="form-control" placeholder="Contoh: Raka Pratama" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="input-class">Kelas / Rombel</label>
+                    <input type="text" id="input-class" class="form-control" placeholder="Contoh: IX A / 9.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="input-nis">Nomor Induk Siswa (NIS / ID Peserta)</label>
+                    <input type="text" id="input-nis" class="form-control" placeholder="Contoh: 12345678" required autocomplete="username">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" style="margin-top: 8px;">
+                    <span>Mulai Ujian Sekarang</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </form>
+            <div class="login-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+                <p style="margin: 0; text-align: left;">Pastikan identitas diisi dengan benar.</p>
+                <button type="button" id="btn-login-teacher-access" class="btn btn-link btn-sm" style="padding: 0; font-size: 12px;">Dasbor Guru</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cbt-app" class="app-disabled">
+        <!-- Top Navigation & Header CBT -->
+        <header class="cbt-header">
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <img src="assets/logo-literasi.svg" alt="Logo CBT" width="32" height="32">
+                </div>
+                <div class="brand-title">
+                    <h1>TKA Bahasa Indonesia SMP</h1>
+                    <span class="sub-title" id="student-info-display">Peserta: - | Kelas: -</span>
+                </div>
+            </div>
+
+            <div class="header-controls">
+                <!-- Tombol Dasbor Guru -->
+                <button id="btn-open-teacher" class="btn btn-outline btn-sm" title="Buka Dasbor Guru & Rekap Nilai">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Dasbor Guru</span>
+                </button>
+
+                <!-- Countdown Timer -->
+                <div class="timer-card" id="timer-card" title="Sisa waktu ujian">
+                    <svg class="timer-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <div class="timer-text">
+                        <span class="timer-label">SISA WAKTU</span>
+                        <span id="cbt-timer" class="timer-value">60:00</span>
+                    </div>
+                </div>
+
+                <!-- Toggle Panel Navigasi Soal (Mobile) -->
+                <button id="btn-toggle-grid" class="btn btn-icon-text" aria-label="Buka Daftar Soal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Daftar Soal</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body Layout CBT -->
+        <div class="cbt-layout">
+            <!-- Left Panel: Stimulus Wacana -->
+            <section class="cbt-panel stimulus-panel" id="stimulus-panel">
+                <div class="panel-header">
+                    <div class="stimulus-badge-group">
+                        <span id="stimulus-jenis" class="badge badge-primary">Teks Berita</span>
+                        <span id="stimulus-tema" class="badge badge-secondary">Lingkungan</span>
+                    </div>
+                    <h2 id="stimulus-judul" class="stimulus-title">Judul Wacana Stimulus</h2>
+                    <p id="stimulus-sumber" class="stimulus-source">Sumber: -</p>
+                </div>
+                <div class="panel-body stimulus-content" id="stimulus-body">
+                    <!-- Teks stimulus di-render dinamis dari questions.js -->
+                </div>
+            </section>
+
+            <!-- Right Panel: Soal & Opsi Jawaban -->
+            <section class="cbt-panel question-panel">
+                <div class="panel-header question-header">
+                    <div class="question-meta">
+                        <span class="question-number-badge" id="question-number-badge">Soal 1 dari 30</span>
+                        <span class="question-type-badge" id="question-type-badge">Pilihan Ganda</span>
+                    </div>
+                    <label class="flag-checkbox-label" title="Tandai jika masih ragu dengan jawaban ini">
+                        <input type="checkbox" id="chk-flag-doubt">
+                        <span class="flag-custom"></span>
+                        <span class="flag-text">Ragu-Ragu</span>
+                    </label>
+                </div>
+
+                <div class="panel-body question-body">
+                    <div class="competency-tag" id="competency-tag">
+                        <strong>Kompetensi:</strong> <span id="competency-text">-</span>
+                    </div>
+
+                    <div class="question-prompt" id="question-prompt">
+                        <!-- Teks soal di-render dinamis -->
+                    </div>
+
+                    <div class="options-container" id="options-container">
+                        <!-- Opsi pilihan ganda / kompleks di-render dinamis -->
+                    </div>
+                </div>
+
+                <!-- Footer Navigasi Soal -->
+                <div class="panel-footer question-footer">
+                    <button id="btn-prev-question" class="btn btn-outline" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                        <span>Sebelumnya</span>
+                    </button>
+
+                    <div class="footer-center-status">
+                        <span id="quick-answered-count">0 / 30 Terjawab</span>
+                    </div>
+
+                    <button id="btn-next-question" class="btn btn-primary">
+                        <span>Selanjutnya</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Drawer Sidebar Navigasi Nomor Soal -->
+            <aside class="cbt-sidebar" id="cbt-sidebar">
+                <div class="sidebar-header">
+                    <h3>Navigasi Soal Ujian</h3>
+                    <button id="btn-close-sidebar" class="btn-close-mobile" aria-label="Tutup Navigasi">&times;</button>
+                </div>
+
+                <div class="sidebar-stats">
+                    <div class="stat-pill stat-answered">
+                        <span class="stat-num" id="stat-count-answered">0</span>
+                        <span class="stat-lbl">Terjawab</span>
+                    </div>
+                    <div class="stat-pill stat-flagged">
+                        <span class="stat-num" id="stat-count-flagged">0</span>
+                        <span class="stat-lbl">Ragu-ragu</span>
+                    </div>
+                    <div class="stat-pill stat-unanswered">
+                        <span class="stat-num" id="stat-count-unanswered">30</span>
+                        <span class="stat-lbl">Belum</span>
+                    </div>
+                </div>
+
+                <!-- Grid Nomor 1 - 30 -->
+                <div class="question-grid" id="question-grid">
+                    <!-- Tombol 1 s.d 30 dirender dinamis -->
+                </div>
+
+                <div class="sidebar-footer">
+                    <button id="btn-finish-test" class="btn btn-success btn-full">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Selesaikan Ujian</span>
+                    </button>
+                    <button id="btn-teacher-sidebar" class="btn btn-outline btn-full btn-sm" style="margin-top: 4px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <span>Buka Dasbor Guru</span>
+                    </button>
+                    <button id="btn-reset-session" class="btn btn-link btn-sm">Keluar / Ganti Akun</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Modal Dasbor Guru (Teacher Dashboard) -->
+    <div id="modal-teacher" class="modal-overlay hidden">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3>Dasbor Pemantauan Guru</h3>
+                    <span class="modal-subtitle">Rekapitulasi Hasil Ujian TKA Bahasa Indonesia Siswa</span>
+                </div>
+                <button class="btn-modal-close" id="btn-close-teacher-modal" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="teacher-stats-bar">
+                    <div class="teacher-stat-card">
+                        <span class="t-stat-num" id="teacher-total-examinees">0</span>
+                        <span class="t-stat-lbl">Siswa Mengumpulkan</span>
+                    </div>
+                    <div class="teacher-stat-card">
+                        <span class="t-stat-num" id="teacher-avg-score">0</span>
+                        <span class="t-stat-lbl">Rata-rata Skor</span>
+                    </div>
+                    <div class="teacher-stat-card">
+                        <span class="t-stat-num" id="teacher-pass-rate">0%</span>
+                        <span class="t-stat-lbl">Tuntas (>=70)</span>
+                    </div>
+                </div>
+
+                <div class="teacher-actions-row" style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0; gap: 12px; flex-wrap: wrap;">
+                    <h4 style="font-size: 16px; font-weight: 700; margin: 0;">Daftar Nilai & Riwayat Siswa</h4>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btn-teacher-export-all" class="btn btn-outline btn-sm">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Ekspor Rekap CSV
+                        </button>
+                        <button id="btn-teacher-clear" class="btn btn-outline btn-sm" style="color: var(--color-danger); border-color: #fecdd3;">
+                            Hapus Riwayat
+                        </button>
+                    </div>
+                </div>
+
+                <div class="teacher-table-container">
+                    <table class="teacher-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Siswa</th>
+                                <th>Kelas</th>
+                                <th>NIS</th>
+                                <th>Skor</th>
+                                <th>Benar</th>
+                                <th>Predikat</th>
+                                <th>Waktu Selesai</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-table-body">
+                            <!-- Diisi dinamis oleh JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-close-teacher-footer" class="btn btn-primary">Tutup Dasbor</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backdrop overlay untuk sidebar mobile -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <!-- Modal Konfirmasi Selesai -->
+    <div id="modal-confirm" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Konfirmasi Selesai Ujian</h3>
+                <button class="btn-modal-close" id="btn-close-confirm-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah kamu yakin ingin mengumpulkan dan menyelesaikan ujian TKA Bahasa Indonesia ini?</p>
+                <div class="summary-box">
+                    <div class="summary-row"><span>Peserta:</span> <strong id="summary-student-name">-</strong></div>
+                    <div class="summary-row"><span>Total Soal:</span> <strong>30 Butir</strong></div>
+                    <div class="summary-row"><span>Terjawab:</span> <strong id="summary-answered">0 Soal</strong></div>
+                    <div class="summary-row warning-text" id="summary-flagged-row"><span>Masih Ragu-ragu:</span> <strong id="summary-flagged">0 Soal</strong></div>
+                    <div class="summary-row danger-text" id="summary-unanswered-row"><span>Belum Dijawab:</span> <strong id="summary-unanswered">30 Soal</strong></div>
+                </div>
+                <p class="modal-note">Pastikan kembali seluruh jawabanmu telah diisi dengan teliti sebelum mengirimkan hasil.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-cancel-submit" class="btn btn-outline">Kembali Periksa</button>
+                <button id="btn-confirm-submit" class="btn btn-success">Kumpulkan Jawaban</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Hasil Ujian & Pembahasan -->
+    <div id="modal-result" class="modal-overlay hidden">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3>Hasil Asesmen TKA Bahasa Indonesia SMP</h3>
+                    <span class="modal-subtitle" id="result-student-subtitle">Peserta: - | Kelas: -</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="result-score-banner">
+                    <div class="score-circle">
+                        <span class="score-number" id="result-final-score">0</span>
+                        <span class="score-caption">Skor Akhir (Skala 100)</span>
+                    </div>
+                    <div class="score-details">
+                        <div class="detail-item"><span>Nama Siswa:</span> <strong id="result-name">-</strong></div>
+                        <div class="detail-item"><span>Kelas / NIS:</span> <strong id="result-class-nis">-</strong></div>
+                        <div class="detail-item"><span>Benar:</span> <strong id="result-correct-count" class="text-success">0 / 30</strong></div>
+                        <div class="detail-item"><span>Nilai Bobot:</span> <strong id="result-weighted-score">0 / 42</strong></div>
+                        <div class="detail-item" style="grid-column: span 2;"><span>Predikat:</span> <strong id="result-predicate" class="text-primary">-</strong></div>
+                    </div>
+                </div>
+
+                <div class="analytics-row">
+                    <div class="analytics-chart-container">
+                        <h5>Analisis Capaian Literasi</h5>
+                        <canvas id="competencyChart"></canvas>
+                    </div>
+                    <div class="analytics-summary">
+                        <div class="result-illustration-container">
+                            <img src="assets/result-illustration.svg" alt="Ilustrasi Hasil" style="width: 100%; max-width: 180px; margin-bottom: 12px;">
+                        </div>
+                        <h5>Rekap Guru & Aksi Lanjutan</h5>
+                        <p>Data hasil ujian siswa ini tersimpan otomatis dan tercatat dalam sistem untuk rekap guru.</p>
+                        <button id="btn-export-csv" class="btn btn-outline btn-full" style="margin-top: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Unduh Hasil (CSV Guru)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="review-section">
+                    <h4>Review & Pembahasan Soal</h4>
+                    <p class="review-hint">Pilih butir soal di bawah ini untuk melihat pembahasan edukatif per kompetensi:</p>
+                    <div class="review-questions-list" id="review-questions-list">
+                        <!-- Daftar pembahasan per butir di-render dinamis -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-restart-exam" class="btn btn-outline">Ganti Akun / Ulang</button>
+                <button id="btn-close-result-modal" class="btn btn-primary">Tutup Tampilan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Library Chart.js untuk Analisis Data -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
